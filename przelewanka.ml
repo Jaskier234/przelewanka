@@ -1,5 +1,4 @@
 
-
 (* dozwalone operacje na stanach *)
 (* ======================================================= *)
 let nalej maks stan i =
@@ -20,7 +19,7 @@ let przelej maks stan i j =
 let kompresuj maks stan = (* bijekcja ze stanu w int *)
   let ans = ref 0 in
   let ilo = ref 1 in
-  for i=0 to Array.length stan - 1 do
+  for i = 0 to Array.length stan - 1 do
     ans := !ans + (stan.(i) * !ilo);
     ilo := !ilo * (maks.(i) + 1);
   done; !ans
@@ -42,40 +41,45 @@ let konieczny maks cel =
     let (_, z) = Array.fold_left g (0, false) cel in
     n && z
 
-let przelewanka arr =
-  let n = Array.length arr in
-  let maks = Array.map (fun (x, y) -> x) arr in 
-  let cel = Array.map (fun (x, y) -> y) arr in
-  if konieczny maks cel = false then -1 else
-  let start = Array.make n 0 in
-  let queue = Queue.create () in
-  let odw = Hashtbl.create 100000 in
+let filter a =
+  let l = List.filter (fun a -> a <> (0, 0)) (Array.to_list a) in
+  Array.of_list l
   
-  let push (s, d) q = (* dodanie stanu na kolejkę, jeśli nie występuje *)
-    let l = kompresuj maks s in
-    if Hashtbl.mem odw l = false
-    then Queue.push (s, d) q; Hashtbl.add odw l true
-  in
-  push (start, 0) queue; (* stan początkowy *)
+let przelewanka arr =
+  let arr = filter arr in 
+  let n = Array.length arr in
+  let maks = Array.map (fun (x, _) -> x) arr in 
+  let cel = Array.map (fun (_, y) -> y) arr in
+  if konieczny maks cel = false then -1 else
+    let start = Array.make n 0 in
+    let queue = Queue.create () in
+    let odw = Hashtbl.create 500000 in
 
-  let rec search () =
-    if Queue.is_empty queue then -1 else
-      begin
-        let (u, d) = Queue.pop queue in
-        if u = cel then d else
-          begin
-            for i = 0 to n - 1 do
-              push (nalej maks u i, d + 1) queue;
-              push (wylej u i, d + 1) queue;
-            done;
-            for i = 0 to n - 1 do
-              for j = 0 to n - 1 do
-                push (przelej maks u i j, d + 1) queue;
+    let push (s, d) q = (* dodanie stanu na kolejkę, jeśli nie występuje *)
+      let l = kompresuj maks s in
+      if Hashtbl.mem odw l = false
+      then Queue.push (s, d) q; Hashtbl.add odw l true
+    in
+    push (start, 0) queue; (* stan początkowy *)
+
+    let rec search () =
+      if Queue.is_empty queue then -1 else
+        begin
+          let (u, d) = Queue.pop queue in
+          if u = cel then d else
+            begin
+              for i = 0 to n - 1 do
+                push (nalej maks u i, d + 1) queue;
+                push (wylej u i, d + 1) queue;
               done;
-            done;
-            search ()
-          end
-      end
-  in
-  search ()
+              for i = 0 to n - 1 do
+                for j = 0 to n - 1 do
+                  push (przelej maks u i j, d + 1) queue;
+                done;
+              done;
+              search ()
+            end
+        end
+    in
+    search ()
 
