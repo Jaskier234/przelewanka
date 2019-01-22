@@ -1,3 +1,5 @@
+(* autor: Artur Matyjasek *)
+(* code review: Michał Makowski *)
 
 (* dozwalone operacje na stanach *)
 (* ======================================================= *)
